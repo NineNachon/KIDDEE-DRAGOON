@@ -20,6 +20,12 @@ import type { AdvancedEvent, VehicleDetection, Lang, LiveSpeed, FilterOption } f
 
 const MAX_ENTRIES = 5000;
 
+function plateProvince(plate?: string): string | null {
+  if (!plate) return null;
+  const parts = plate.trim().split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1] : null;
+}
+
 export default function DashboardPage() {
   const [dark, setDark] = useState(false);
   const [lang, setLang] = useState<Lang>("th");
@@ -108,7 +114,10 @@ export default function DashboardPage() {
     if (brandFilter.length > 0) result = result.filter(e => brandFilter.includes(e.brand));
     if (colorFilter.length > 0) result = result.filter(e => colorFilter.includes(e.colorLabel));
     if (modelFilter.length > 0) result = result.filter(e => e.vehicleModel && modelFilter.includes(e.vehicleModel));
-    if (plateFilter.length > 0) result = result.filter(e => e.licensePlate && plateFilter.includes(e.licensePlate));
+    if (plateFilter.length > 0) result = result.filter(e => {
+      const province = plateProvince(e.licensePlate);
+      return province ? plateFilter.includes(province) : false;
+    });
     if (eventFilter.length > 0) {
       result = result.filter(e => {
         const events = eventByDetectionKey.get(detectionKey(e)) || [];
@@ -140,7 +149,7 @@ export default function DashboardPage() {
     [entries]);
 
   const plateOptions = useMemo<FilterOption[]>(() =>
-    [...new Set(entries.map(e => e.licensePlate).filter(Boolean) as string[])].sort().map(p => ({ value: p, label: p })),
+    [...new Set(entries.map(e => plateProvince(e.licensePlate)).filter(Boolean) as string[])].sort().map(p => ({ value: p, label: p })),
     [entries]);
 
   const eventOptions = useMemo<FilterOption[]>(() =>

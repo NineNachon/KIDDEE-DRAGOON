@@ -41,6 +41,7 @@ class VehicleDetection(BaseModel):
     # Optional enrichments from future models.
     vehicleModel: str | None = None
     licensePlate: str | None = None
+    eventFlag: str | None = None
     plateConfidence: float | None = Field(default=None, ge=0, le=1)
     cameraId: str | None = None
     laneId: str | None = None
@@ -71,6 +72,7 @@ class AdvancedEvent(BaseModel):
 
 OPTIONAL_FIELDS = {
     "vehicleModel",
+    "eventFlag",
     "licensePlate",
     "plateConfidence",
     "cameraId",
@@ -115,6 +117,12 @@ def parse_detection_row(row: dict[str, str]) -> VehicleDetection:
         "colorLabel": row["colorLabel"],
         "colorHex": row["colorHex"],
     }
+
+    if row.get("model") and not row.get("vehicleModel"):
+        payload["vehicleModel"] = row["model"]
+
+    if row.get("Event") and not row.get("eventFlag"):
+        payload["eventFlag"] = row["Event"]
 
     for field in OPTIONAL_FIELDS:
         if field not in row:
