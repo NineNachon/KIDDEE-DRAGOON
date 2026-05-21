@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NT Vehicle Detection Analytics — Chaengwattana</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.35s ease, color 0.35s ease;
+      -webkit-font-smoothing: antialiased;
+    }
+    :root {
+      --bg: #F0F2F5;
+      --surface: #ffffff;
+      --surface2: #f7f8fa;
+      --text: #1a1d23;
+      --subtle: #6b7280;
+      --border: #e5e7eb;
+      --row-alt: #fafbfc;
+      --thead: #FFFDE7;
+      --yellow: #FFD300;
+      --yellow-dark: #E6B800;
+      --yellow-light: #FFF9DB;
+      --green: #22c55e;
+      --green-bg: rgba(34,197,94,0.1);
+      --red: #ef4444;
+      --red-bg: rgba(239,68,68,0.1);
+      --blue: #3b82f6;
+      --blue-bg: rgba(59,130,246,0.1);
+      --purple: #8b5cf6;
+      --purple-bg: rgba(139,92,246,0.1);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+      --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+      --shadow-lg: 0 4px 24px rgba(0,0,0,0.08);
+      --radius: 16px;
+    }
+    body.dark {
+      --bg: #0a0e17;
+      --surface: #131a2b;
+      --surface2: #0f1524;
+      --text: #e2e8f0;
+      --subtle: #64748b;
+      --border: #1e293b;
+      --row-alt: #0f1524;
+      --thead: #131d33;
+      --yellow: #FFD300;
+      --yellow-dark: #E6B800;
+      --yellow-light: #1a1d33;
+      --green-bg: rgba(34,197,94,0.12);
+      --red-bg: rgba(239,68,68,0.12);
+      --blue-bg: rgba(59,130,246,0.12);
+      --purple-bg: rgba(139,92,246,0.12);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+      --shadow: 0 1px 4px rgba(0,0,0,0.25), 0 4px 16px rgba(0,0,0,0.15);
+      --shadow-lg: 0 4px 24px rgba(0,0,0,0.35);
+    }
+
+    /* Animations */
+    @keyframes pulse-ring {
+      0%   { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(2.8); opacity: 0; }
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slide-in-row {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes count-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+    .fade-up {
+      animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      opacity: 0;
+    }
+    .new-row { animation: slide-in-row 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+    /* Grid */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    @media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      .grid-4, .grid-2 { grid-template-columns: 1fr; }
+      .nav-clock { display: none; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    body.dark ::-webkit-scrollbar-thumb { background: #334155; }
+
+    /* Table row hover */
+    .trow { transition: background 0.15s ease; }
+    .trow:hover { background: var(--yellow-light) !important; }
+    .fd-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      min-width: 240px;
+      max-height: 340px;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+    }
+    .fd-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-size: 13px;
+    }
+    .fd-item:hover { background: var(--surface2); }
+    .fd-check { width: 16px; height: 16px; accent-color: var(--yellow); cursor: pointer; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+/* ── Constants ─────────────────────────────────────────────────────────── */
+const BRANDS  = ['Toyota','Honda','Isuzu','Mitsubishi','Ford','Mazda','Nissan'];
+const BW      = [.30,.22,.18,.12,.08,.06,.04];
+const CLRS    = ['White','Black','Silver','Bronze','Red','Gray'];
+const CW      = [.28,.24,.20,.12,.09,.07];
+const TYPES   = ['Car','Truck','Motorcycle'];
+const TW      = [.65,.25,.10];
+
+const CLR_HEX = { White:'#E8E8E8', Black:'#1C1C1C', Silver:'#A8A8A8', Bronze:'#C07830', Red:'#DC2626', Gray:'#6B7280' };
+const TH_CLR  = { White:'ขาว', Black:'ดำ', Silver:'เงิน', Bronze:'บรอนซ์', Red:'แดง', Gray:'เทา' };
+const TH_TYPE = { Car:'รถยนต์ส่วนบุคคล', Truck:'รถบรรทุก', Motorcycle:'รถมอไซต์' };
+const EN_TYPE = { Car:'Personal Car', Truck:'Truck', Motorcycle:'Motorcycle' };
+const EN_CLR  = { White:'White', Black:'Black', Silver:'Silver', Bronze:'Bronze', Red:'Red', Gray:'Gray' };
+
+const TYPE_ICON = {
+  Car: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17h14v-5l-2-5H7L5 12z"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/></svg>,
+  Truck: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18" r="2"/><circle cx="18.5" cy="18" r="2"/></svg>,
+  Motorcycle: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="18" r="3"/><circle cx="19" cy="18" r="3"/><path d="M5 18h3l4-8h3l2 4h2"/></svg>,
+};
+
+/* ── SVG Icons ──────────────────────────────────────────────────────────── */
+const Icons = {
+  car: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M19 17h2V9l-4-5H7L3 9v8h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 9h14l-1.5-4H6.5z"/></svg>,
+  chart: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>,
+  palette: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-0.9 2-2 0-0.6-0.3-1.1-0.7-1.5-0.4-0.4-0.7-0.9-0.7-1.5 0-1.1 0.9-2 2-2H16c3.3 0 6-2.7 6-6 0-4.4-4.5-8-10-8z"/></svg>,
+  trophy: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 9H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M18 9h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><path d="M4 4h16v6a8 8 0 0 1-16 0V4z"/><path d="M12 16v3"/><path d="M8 22h8"/><path d="M8 22v-3"/><path d="M16 22v-3"/></svg>,
+  search: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+  download: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+  upload: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+  sun: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+  moon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
+};
+
+/* ── Mock Data ──────────────────────────────────────────────────────────── */
+function wRand(arr, wts) {
+  let r = Math.random(), c = 0;
+  for (let i = 0; i < arr.length; i++) { c += wts[i]; if (r <= c) return arr[i]; }
+  return arr[arr.length - 1];
+}
+const p2 = n => String(n).padStart(2, '0');
+function mkEntry(mAgo = 0, isNew = false) {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - Math.floor(mAgo));
+  d.setSeconds(Math.floor(Math.random() * 59));
+  return {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + mAgo,
+    timestamp: `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`,
+    car_color: wRand(CLRS, CW),
+    brand: wRand(BRANDS, BW),
+    vehicle_type: wRand(TYPES, TW),
+    isNew,
+  };
+}
+
+function generateHourlyData() {
+  const hours = [];
+  const now = new Date();
+  for (let i = 23; i >= 0; i--) {
+    const h = new Date(now);
+    h.setHours(h.getHours() - i);
+    hours.push({
+      hour: p2(h.getHours()) + ':00',
+      count: Math.floor(30 + Math.random() * 60 + (i < 12 ? 20 : 0)),
+    });
+  }
+  return hours;
+}
+
+const initData = () => Array.from({ length: 92 }, (_, i) => mkEntry(i * 7));
+
+/* ── Helpers ────────────────────────────────────────────────────────────── */
+function useCountUp(target, duration = 800) {
+  const [val, setVal] = useState(0);
+  const prevRef = useRef(0);
+  useEffect(() => {
+    const start = prevRef.current;
+    const diff = target - start;
+    if (diff === 0) { setVal(target); return; }
+    const startTime = performance.now();
+    const step = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setVal(Math.round(start + diff * eased));
+      if (progress < 1) requestAnimationFrame(step);
+      else prevRef.current = target;
+    };
+    requestAnimationFrame(step);
+  }, [target, duration]);
+  return val;
+}
+
+/* ── NavBar ─────────────────────────────────────────────────────────────── */
+function NavBar({ dark, setDark, lang, setLang }) {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
+  const dateStr = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const dateStrEn = now.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+  return (
+    <nav style={{
+      background: 'var(--surface)',
+      borderBottom: '1px solid var(--border)',
+      padding: '0 32px',
+      height: 68,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      position: 'sticky',
+      top: 0,
+      zIndex: 200,
+      boxShadow: 'var(--shadow-sm)',
+      transition: 'all 0.35s ease',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{
+          width: 44, height: 44,
+          background: 'linear-gradient(135deg, #FFD300 0%, #FFAA00 100%)',
+          borderRadius: 12,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+          boxShadow: '0 4px 14px rgba(255,211,0,0.3)',
+        }}>
+          <span style={{ fontWeight: 900, fontSize: 18, color: '#1a1d23', letterSpacing: -0.5 }}>NT</span>
+        </div>
+        <div>
+          <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text)', lineHeight: 1.2, letterSpacing: -0.2 }}>
+            NT Vehicle Detection Analytics
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--subtle)', marginTop: 2, fontWeight: 400 }}>
+            {lang === 'en' ? 'Chaengwattana Center — Security Control' : 'ศูนย์แจ้งวัฒนะ — ระบบตรวจจับยานพาหนะ'}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div className="nav-clock" style={{ textAlign: 'right' }}>
+          <div style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 20, fontWeight: 600,
+            color: 'var(--text)', letterSpacing: 1.2, lineHeight: 1,
+          }}>
+            {p2(now.getHours())}:{p2(now.getMinutes())}:{p2(now.getSeconds())}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--subtle)', marginTop: 3 }}>
+            {lang === 'en' ? dateStrEn : dateStr}
+          </div>
+        </div>
+
+        <div style={{ width: 1, height: 32, background: 'var(--border)', margin: '0 4px' }} />
+
+        <button onClick={() => setLang(lang === 'th' ? 'en' : 'th')} style={{
+          padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)',
+          background: 'var(--surface)', color: 'var(--text)',
+          fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+          fontFamily: 'Sarabun, sans-serif',
+        }}>
+          {lang === 'th' ? 'EN' : 'TH'}
+        </button>
+
+        <button onClick={() => setDark(!dark)} style={{
+          width: 38, height: 38, borderRadius: 10, border: '1px solid var(--border)',
+          background: 'var(--surface)', color: 'var(--text)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', transition: 'all 0.25s',
+        }}>
+          {dark ? Icons.sun : Icons.moon}
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+/* ── KPI Card ───────────────────────────────────────────────────────────── */
+function StatCard({ icon, label, sublabel, value, trend, trendLabel, color, bgColor, delay = 0 }) {
+  const counted = useCountUp(value, 1000);
+  const pos = trend >= 0;
+  return (
+    <div className="fade-up" style={{
+      animationDelay: `${delay}ms`,
+      background: 'var(--surface)',
+      borderRadius: 'var(--radius)',
+      padding: '22px 24px',
+      boxShadow: 'var(--shadow)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+      transition: 'background 0.35s, box-shadow 0.25s',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', top: -8, right: -8,
+        width: 64, height: 64, borderRadius: '50%',
+        background: bgColor, opacity: 0.6,
+      }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative' }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 12,
+          background: bgColor,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: color,
+        }}>
+          {icon}
+        </div>
+        {trendLabel && (
+          <span style={{
+            background: pos ? 'var(--green-bg)' : 'var(--red-bg)',
+            color: pos ? '#16a34a' : '#dc2626',
+            padding: '3px 10px', borderRadius: 20,
+            fontSize: 12, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', gap: 3,
+          }}>
+            {pos ? '↑' : '↓'} {Math.abs(trend).toFixed(1)}%
+          </span>
+        )}
+      </div>
+      <div style={{ position: 'relative' }}>
+        <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--text)', lineHeight: 1, letterSpacing: -1.5 }}>
+          {typeof value === 'number' ? counted.toLocaleString() : value}
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginTop: 6, lineHeight: 1.3 }}>
+          {label}
+        </div>
+        {sublabel && (
+          <div style={{ fontSize: 11.5, color: 'var(--subtle)', marginTop: 2 }}>{sublabel}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Donut Chart ────────────────────────────────────────────────────────── */
+function p2c(cx, cy, r, deg) {
+  const rad = ((deg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+function donutSeg(cx, cy, R, ri, s0, e0) {
+  const gap = Math.min(1.8, (e0 - s0) * 0.06);
+  const s = s0 + gap, e = e0 - gap;
+  if (e <= s) return '';
+  const os = p2c(cx, cy, R, s), oe = p2c(cx, cy, R, e);
+  const is_ = p2c(cx, cy, ri, s), ie = p2c(cx, cy, ri, e);
+  const lg = (e - s) > 180 ? 1 : 0;
+  return `M${os.x.toFixed(2)} ${os.y.toFixed(2)} A${R} ${R} 0 ${lg} 1 ${oe.x.toFixed(2)} ${oe.y.toFixed(2)} L${ie.x.toFixed(2)} ${ie.y.toFixed(2)} A${ri} ${ri} 0 ${lg} 0 ${is_.x.toFixed(2)} ${is_.y.toFixed(2)}Z`;
+}
+
+function DonutChart({ entries, dark, lang }) {
+  const [hov, setHov] = useState(null);
+  const data = useMemo(() => {
+    const c = {};
+    entries.forEach(e => { c[e.car_color] = (c[e.car_color] || 0) + 1; });
+    return Object.entries(c).sort((a, b) => b[1] - a[1]);
+  }, [entries]);
+  const total = entries.length || 1;
+  const cx = 95, cy = 95, R = 78, ri = 50;
+  let cur = 0;
+  const segs = data.map(([color, cnt]) => {
+    const sw = (cnt / total) * 360;
+    const seg = { color, cnt, pct: cnt / total, s: cur, e: cur + sw };
+    cur += sw;
+    return seg;
+  });
+  const hovSeg = segs.find(s => s.color === hov);
+  const textFill = dark ? '#E2E8F0' : '#1a1d23';
+  const subFill = dark ? '#64748b' : '#6b7280';
+
+  return (
+    <div className="fade-up" style={{
+      animationDelay: '150ms',
+      background: 'var(--surface)', borderRadius: 'var(--radius)',
+      padding: '24px 28px', boxShadow: 'var(--shadow)',
+      transition: 'background 0.35s',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+        <span style={{ color: 'var(--purple)' }}>{Icons.palette}</span>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--text)' }}>
+            {lang === 'en' ? 'Vehicle Color Distribution' : 'สัดส่วนสีของรถที่เข้า-ออก'}
+          </div>
+        </div>
+      </div>
+      <div style={{ fontSize: 11.5, color: 'var(--subtle)', marginBottom: 18 }}>
+        {lang === 'en' ? 'Breakdown by detected car color' : 'แบ่งตามสีรถที่ตรวจจับได้'}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        <svg width={190} height={190} style={{ flexShrink: 0, overflow: 'visible' }}>
+          {segs.map(s => (
+            <path key={s.color}
+              d={donutSeg(cx, cy, R + (hov === s.color ? 8 : 0), ri, s.s, s.e)}
+              fill={CLR_HEX[s.color] || '#ccc'}
+              opacity={hov && hov !== s.color ? 0.25 : 1}
+              style={{ cursor: 'pointer', transition: 'all 0.25s cubic-bezier(0.22,1,0.36,1)' }}
+              onMouseEnter={() => setHov(s.color)}
+              onMouseLeave={() => setHov(null)}
+            />
+          ))}
+          {!hov ? (
+            <>
+              <text x={cx} y={cy + 1} textAnchor="middle" style={{ fontSize: 28, fontWeight: 800, fill: textFill, fontFamily: 'Sarabun,sans-serif' }}>{total}</text>
+              <text x={cx} y={cy + 18} textAnchor="middle" style={{ fontSize: 10, fill: subFill, fontFamily: 'Sarabun,sans-serif' }}>
+                {lang === 'en' ? 'total' : 'คันทั้งหมด'}
+              </text>
+            </>
+          ) : hovSeg ? (
+            <>
+              <text x={cx} y={cy + 1} textAnchor="middle" style={{ fontSize: 24, fontWeight: 800, fill: textFill, fontFamily: 'Sarabun,sans-serif' }}>{(hovSeg.pct * 100).toFixed(1)}%</text>
+              <text x={cx} y={cy + 17} textAnchor="middle" style={{ fontSize: 10.5, fill: subFill, fontFamily: 'Sarabun,sans-serif' }}>
+                {(TH_CLR[hov] || hov)} · {hovSeg.cnt}
+              </text>
+            </>
+          ) : null}
+        </svg>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+          {segs.map(s => (
+            <div key={s.color}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                opacity: hov && hov !== s.color ? 0.3 : 1, transition: 'opacity 0.2s',
+                padding: '4px 0',
+              }}
+              onMouseEnter={() => setHov(s.color)} onMouseLeave={() => setHov(null)}>
+              <span style={{
+                width: 12, height: 12, borderRadius: 3,
+                background: CLR_HEX[s.color] || '#ccc',
+                border: s.color === 'White' ? '1px solid #ccc' : 'none',
+                flexShrink: 0,
+              }} />
+              <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, flex: 1 }}>
+                {lang === 'en' ? (EN_CLR[s.color] || s.color) : (TH_CLR[s.color] || s.color)}
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--subtle)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 500 }}>
+                {(s.pct * 100).toFixed(0)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Area Chart (Trend) ─────────────────────────────────────────────────── */
+function TrendChart({ entries, dark, lang }) {
+  const hourly = useMemo(() => {
+    const buckets = {};
+    entries.forEach(e => {
+      const hr = e.timestamp.slice(11, 13) + ':00';
+      buckets[hr] = (buckets[hr] || 0) + 1;
+    });
+    const sorted = Object.entries(buckets).sort((a, b) => a[0].localeCompare(b[0]));
+    if (sorted.length < 2) return generateHourlyData();
+    return sorted.map(([hour, count]) => ({ hour, count }));
+  }, [entries]);
+
+  const W = 480, H = 200, pad = { t: 10, r: 10, b: 30, l: 40 };
+  const iW = W - pad.l - pad.r, iH = H - pad.t - pad.b;
+  const maxC = Math.max(...hourly.map(d => d.count), 1);
+  const pts = hourly.map((d, i) => ({
+    x: pad.l + (i / Math.max(hourly.length - 1, 1)) * iW,
+    y: pad.t + iH - (d.count / maxC) * iH,
+    ...d,
+  }));
+
+  const line = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ');
+  const area = line + ` L${pts[pts.length - 1].x.toFixed(1)} ${pad.t + iH} L${pts[0].x.toFixed(1)} ${pad.t + iH} Z`;
+
+  const [hov, setHov] = useState(null);
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map(f => pad.t + iH - f * iH);
+  const yLabels = [0, 0.25, 0.5, 0.75, 1].map(f => Math.round(f * maxC));
+  const textFill = dark ? '#64748b' : '#9ca3af';
+
+  return (
+    <div className="fade-up" style={{
+      animationDelay: '200ms',
+      background: 'var(--surface)', borderRadius: 'var(--radius)',
+      padding: '24px 28px', boxShadow: 'var(--shadow)',
+      transition: 'background 0.35s',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+        <span style={{ color: 'var(--blue)' }}>{Icons.chart}</span>
+        <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--text)' }}>
+          {lang === 'en' ? 'Hourly Vehicle Trend' : 'แนวโน้มยานพาหนะรายชั่วโมง'}
+        </div>
+      </div>
+      <div style={{ fontSize: 11.5, color: 'var(--subtle)', marginBottom: 16 }}>
+        {lang === 'en' ? 'Vehicle detections per hour today' : 'จำนวนยานพาหนะที่ตรวจจับต่อชั่วโมง'}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', overflow: 'visible' }}>
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={dark ? '#3b82f6' : '#3b82f6'} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={dark ? '#3b82f6' : '#3b82f6'} stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        {gridLines.map((y, i) => (
+          <g key={i}>
+            <line x1={pad.l} y1={y} x2={W - pad.r} y2={y} stroke={dark ? '#1e293b' : '#f0f0f0'} strokeWidth="1" />
+            <text x={pad.l - 8} y={y + 4} textAnchor="end" style={{ fontSize: 9, fill: textFill, fontFamily: 'JetBrains Mono, monospace' }}>
+              {yLabels[i]}
+            </text>
+          </g>
+        ))}
+        <path d={area} fill="url(#areaGrad)" />
+        <path d={line} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {pts.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={hov === i ? 5 : 3}
+            fill={hov === i ? '#3b82f6' : dark ? '#131a2b' : '#ffffff'}
+            stroke="#3b82f6" strokeWidth="2"
+            style={{ cursor: 'pointer', transition: 'r 0.15s' }}
+            onMouseEnter={() => setHov(i)}
+            onMouseLeave={() => setHov(null)}
+          />
+        ))}
+        {pts.filter((_, i) => i % Math.max(1, Math.floor(pts.length / 8)) === 0).map(p => (
+          <text x={p.x} y={H - 6} textAnchor="middle" style={{ fontSize: 9, fill: textFill, fontFamily: 'JetBrains Mono, monospace' }}>
+            {p.hour.slice(0, 2)}
+          </text>
+        ))}
+        {hov != null && pts[hov] && (
+          <g>
+            <line x1={pts[hov].x} y1={pad.t} x2={pts[hov].x} y2={pad.t + iH}
+              stroke={dark ? '#334155' : '#d1d5db'} strokeWidth="1" strokeDasharray="4 3" />
+            <rect x={pts[hov].x - 30} y={pts[hov].y - 28} width="60" height="22" rx="6"
+              fill={dark ? '#1e293b' : '#1a1d23'} />
+            <text x={pts[hov].x} y={pts[hov].y - 13} textAnchor="middle"
+              style={{ fontSize: 11, fontWeight: 700, fill: '#fff', fontFamily: 'Sarabun,sans-serif' }}>
+              {pts[hov].count}
+            </text>
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+/* ── Top Brands Card ────────────────────────────────────────────────────── */
+function TopBrandsCard({ entries, lang }) {
+  const data = useMemo(() => {
+    const c = {};
+    entries.forEach(e => { c[e.brand] = (c[e.brand] || 0) + 1; });
+    return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [entries]);
+  const total = entries.length || 1;
+  const max = data[0]?.[1] || 1;
+  const palettes = ['#FFD300', '#94A3B8', '#CBD5E1', '#E2E8F0', '#F1F5F9'];
+  const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+
+  return (
+    <div className="fade-up" style={{
+      animationDelay: '100ms',
+      background: 'var(--surface)', borderRadius: 'var(--radius)',
+      padding: '24px 28px', boxShadow: 'var(--shadow)',
+      transition: 'background 0.35s',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+        <span style={{ color: 'var(--yellow-dark)' }}>{Icons.trophy}</span>
+        <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--text)' }}>
+          {lang === 'en' ? 'Top Vehicle Brands' : 'ยี่ห้อรถยนต์ยอดนิยม'}
+        </div>
+      </div>
+      <div style={{ fontSize: 11.5, color: 'var(--subtle)', marginBottom: 22 }}>
+        {lang === 'en' ? 'Top 5 by detection count' : 'อันดับ 5 ยี่ห้อที่พบมากที่สุด'}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {data.map(([brand, cnt], i) => (
+          <div key={brand}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7, alignItems: 'center' }}>
+              <span style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: i < 3 ? 14 : 12, width: 24, textAlign: 'center' }}>{medals[i]}</span>
+                {brand}
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--subtle)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 500 }}>
+                {cnt} <span style={{ opacity: 0.6 }}>· {((cnt / total) * 100).toFixed(1)}%</span>
+              </span>
+            </div>
+            <div style={{
+              background: 'var(--border)', borderRadius: 6, height: 8, overflow: 'hidden',
+            }}>
+              <div style={{
+                width: `${(cnt / max) * 100}%`, height: '100%',
+                background: palettes[i], borderRadius: 6,
+                transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)',
+              }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Vehicle Type Distribution ──────────────────────────────────────────── */
+function TypeDistribution({ entries, lang }) {
+  const data = useMemo(() => {
+    const c = {};
+    entries.forEach(e => { c[e.vehicle_type] = (c[e.vehicle_type] || 0) + 1; });
+    return Object.entries(c).sort((a, b) => b[1] - a[1]);
+  }, [entries]);
+  const total = entries.length || 1;
+  const colors = { Car: '#3b82f6', Truck: '#f59e0b', Motorcycle: '#8b5cf6' };
+  const bgColors = { Car: 'var(--blue-bg)', Truck: 'var(--purple-bg)', Motorcycle: 'var(--green-bg)' };
+
+  return (
+    <div className="fade-up" style={{
+      animationDelay: '250ms',
+      background: 'var(--surface)', borderRadius: 'var(--radius)',
+      padding: '24px 28px', boxShadow: 'var(--shadow)',
+      transition: 'background 0.35s',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+        <span style={{ color: 'var(--green)' }}>{Icons.car}</span>
+        <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--text)' }}>
+          {lang === 'en' ? 'Vehicle Type Distribution' : 'สัดส่วนประเภทยานพาหนะ'}
+        </div>
+      </div>
+      <div style={{ fontSize: 11.5, color: 'var(--subtle)', marginBottom: 22 }}>
+        {lang === 'en' ? 'Detected by category' : 'ตรวจจับแยกตามประเภท'}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {data.map(([type, cnt]) => {
+          const pct = (cnt / total) * 100;
+          return (
+            <div key={type} style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              padding: '12px 16px',
+              background: bgColors[type] || 'var(--surface2)',
+              borderRadius: 12,
+              transition: 'transform 0.2s',
+            }}>
+              <span style={{ color: colors[type], flexShrink: 0 }}>{TYPE_ICON[type]}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>
+                    {lang === 'en' ? (EN_TYPE[type] || type) : (TH_TYPE[type] || type)}
+                  </span>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: colors[type], fontFamily: 'JetBrains Mono, monospace' }}>
+                    {cnt.toLocaleString()}
+                  </span>
+                </div>
+                <div style={{ background: 'var(--border)', borderRadius: 4, height: 5, overflow: 'hidden' }}>
+                  <div style={{
+                    width: `${pct}%`, height: '100%', background: colors[type],
+                    borderRadius: 4, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)',
+                  }} />
+                </div>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 800, color: colors[type], minWidth: 44, textAlign: 'right' }}>
+                {pct.toFixed(0)}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── Badges ─────────────────────────────────────────────────────────────── */
+const BADGE = {
+  Car: { background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' },
+  Truck: { background: '#FFF7ED', color: '#C2410C', border: '1px solid #FED7AA' },
+  Motorcycle: { background: '#F5F3FF', color: '#7C3AED', border: '1px solid #DDD6FE' },
+};
+function TypeBadge({ type, lang }) {
+  const s = BADGE[type] || BADGE.Car;
+  return (
+    <span style={{
+      padding: '4px 12px', borderRadius: 100, fontSize: 11.5, fontWeight: 600,
+      whiteSpace: 'nowrap', ...s,
+    }}>
+      {lang === 'en' ? (EN_TYPE[type] || type) : (TH_TYPE[type] || type)}
+    </span>
+  );
+}
+function ColorDot({ color, lang }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <span style={{
+        width: 13, height: 13, borderRadius: '50%',
+        background: CLR_HEX[color] || '#ccc',
+        border: color === 'White' ? '1.5px solid #bbb' : 'none',
+        flexShrink: 0,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+      }} />
+      <span style={{ color: 'var(--text)', fontWeight: 500 }}>
+        {lang === 'en' ? (EN_CLR[color] || color) : (TH_CLR[color] || color)}
+      </span>
+    </span>
+  );
+}
+
+/* ── Filter Dropdown ─────────────────────────────────────────────────────── */
+function FilterDropdown({ label, icon, options, selected, onToggle, onClear, lang }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+  const cnt = selected.length;
+  return (
+    <div style={{ position: 'relative' }} ref={ref}>
+      <button onClick={() => setOpen(!open)} style={{
+        padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)',
+        background: cnt > 0 ? 'var(--yellow-light)' : 'var(--surface)',
+        color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+        fontFamily: 'Sarabun,sans-serif', display: 'flex', alignItems: 'center', gap: 6,
+        transition: 'all 0.2s', whiteSpace: 'nowrap',
+      }}>
+        {icon} {label}
+        {cnt > 0 && (
+          <span style={{
+            background: 'var(--yellow)', color: '#1a1d23', borderRadius: 20,
+            padding: '1px 8px', fontSize: 11, fontWeight: 700,
+          }}>{cnt}</span>
+        )}
+        <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>▼</span>
+      </button>
+      {open && (
+        <div className="fd-menu">
+          <div style={{
+            padding: '10px 16px', borderBottom: '1px solid var(--border)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1,
+          }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--subtle)' }}>
+              {lang === 'en' ? 'Select' : 'เลือก'}
+            </span>
+            <button onClick={onClear} style={{
+              background: 'none', border: 'none', color: 'var(--yellow-dark)',
+              fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Sarabun,sans-serif',
+            }}>
+              {lang === 'en' ? 'Clear' : 'ล้าง'}
+            </button>
+          </div>
+          {options.map(opt => (
+            <label key={opt.value} className="fd-item">
+              <input type="checkbox" className="fd-check"
+                checked={selected.includes(opt.value)}
+                onChange={() => onToggle(opt.value)}
+              />
+              <span style={{ color: 'var(--text)', fontWeight: 500 }}>{opt.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Data Table ─────────────────────────────────────────────────────────── */
+const PER_PAGE = 15;
+
+function DataTable({ rows, allRows, search, setSearch, lang,
+  typeFilter, setTypeFilter, brandFilter, setBrandFilter,
+  colorFilter, setColorFilter, timeStart, setTimeStart, timeEnd, setTimeEnd,
+  typeOptions, brandOptions, colorOptions }) {
+  const [page, setPage] = useState(1);
+  const [sk, setSk] = useState('timestamp');
+  const [sd, setSd] = useState('desc');
+  const fileRef = useRef();
+
+  const sorted = useMemo(() =>
+    [...rows].sort((a, b) => sd === 'asc' ? a[sk].localeCompare(b[sk]) : b[sk].localeCompare(a[sk]))
+  , [rows, sk, sd]);
+
+  const pages = Math.max(1, Math.ceil(sorted.length / PER_PAGE));
+  const pageRows = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  useEffect(() => { setPage(1); }, [search, rows.length]);
+
+  const sort = k => { if (sk === k) setSd(d => d === 'asc' ? 'desc' : 'asc'); else { setSk(k); setSd('desc'); } };
+  const SI = ({ k }) => sk !== k
+    ? <span style={{ color: 'var(--subtle)', marginLeft: 4, fontSize: 10, opacity: 0.5 }}>⇅</span>
+    : <span style={{ marginLeft: 4, color: 'var(--yellow-dark)', fontSize: 11 }}>{sd === 'asc' ? '↑' : '↓'}</span>;
+
+  const exportCSV = () => {
+    const hdr = 'timestamp,car_color,brand,vehicle_type';
+    const body = allRows.map(e => [e.timestamp, e.car_color, e.brand, e.vehicle_type].join(',')).join('\n');
+    const blob = new Blob([hdr + '\n' + body], { type: 'text/csv' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'vehicle_log.csv' });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  };
+  const importCSV = ev => {
+    const f = ev.target.files[0]; if (!f) return;
+    const fr = new FileReader();
+    fr.onload = e => {
+      const imported = e.target.result.split('\n').slice(1).filter(Boolean).map(l => {
+        const [timestamp, car_color, brand, vehicle_type] = l.split(',').map(s => s.trim());
+        return { id: Math.random().toString(36), timestamp, car_color, brand, vehicle_type, isNew: false };
+      }).filter(r => r.timestamp && r.brand);
+      window.dispatchEvent(new CustomEvent('nt-csv', { detail: imported }));
+    };
+    fr.readAsText(f); ev.target.value = '';
+  };
+
+  const COL = lang === 'en'
+    ? { ts: 'Timestamp', type: 'Vehicle Type', brand: 'Brand', color: 'Color' }
+    : { ts: 'เวลา', type: 'ประเภทรถ', brand: 'ยี่ห้อ', color: 'สีรถ' };
+
+  return (
+    <div className="fade-up" style={{
+      animationDelay: '300ms',
+      background: 'var(--surface)', borderRadius: 'var(--radius)',
+      boxShadow: 'var(--shadow)', overflow: 'hidden',
+      borderTop: '4px solid var(--yellow)',
+      transition: 'background 0.35s',
+    }}>
+      {/* Toolbar */}
+      <div style={{
+        padding: '20px 28px', display: 'flex', justifyContent: 'space-between',
+        alignItems: 'center', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 14,
+      }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--text)' }}>
+            {lang === 'en' ? 'Detection Log' : 'บันทึกการตรวจจับยานพาหนะ'}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--subtle)', marginTop: 3 }}>
+            Live Detection Log · {rows.length.toLocaleString()} {lang === 'en' ? 'entries' : 'รายการ'}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--subtle)', display: 'flex' }}>
+              {Icons.search}
+            </span>
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder={lang === 'en' ? 'Search…' : 'ค้นหา…'}
+              style={{
+                padding: '9px 14px 9px 36px', border: '1px solid var(--border)',
+                borderRadius: 10, fontSize: 13, fontFamily: 'Sarabun,sans-serif',
+                background: 'var(--surface2)', color: 'var(--text)', outline: 'none',
+                width: 200, transition: 'border 0.2s, box-shadow 0.2s',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'var(--yellow)'; e.target.style.boxShadow = '0 0 0 3px rgba(255,211,0,0.15)'; }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
+            />
+          </div>
+          <input ref={fileRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={importCSV} />
+          <button onClick={() => fileRef.current?.click()} style={{
+            padding: '9px 16px', borderRadius: 10, border: '1px solid var(--border)',
+            background: 'var(--surface)', color: 'var(--text)', fontSize: 12.5,
+            fontWeight: 600, cursor: 'pointer', fontFamily: 'Sarabun,sans-serif',
+            display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s',
+          }}>
+            {Icons.upload} {lang === 'en' ? 'Import' : 'นำเข้า'}
+          </button>
+          <button onClick={exportCSV} style={{
+            padding: '9px 18px', borderRadius: 10, border: 'none',
+            background: 'linear-gradient(135deg, #FFD300, #FFAA00)', color: '#1a1d23',
+            fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'Sarabun,sans-serif',
+            display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s',
+            boxShadow: '0 2px 8px rgba(255,211,0,0.3)',
+          }}>
+            {Icons.download} {lang === 'en' ? 'Export CSV' : 'ส่งออก CSV'}
+          </button>
+        </div>
+
+        {/* Filter Bar */}
+        <div style={{
+          padding: '14px 28px', display: 'flex', gap: 10, alignItems: 'center',
+          borderBottom: '1px solid var(--border)', flexWrap: 'wrap',
+          background: 'var(--surface2)',
+        }}>
+          <FilterDropdown
+            label={lang === 'en' ? 'Vehicle Type' : 'ประเภทรถ'}
+            options={typeOptions}
+            selected={typeFilter}
+            onToggle={v => setTypeFilter(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])}
+            onClear={() => setTypeFilter([])}
+            lang={lang}
+          />
+          <FilterDropdown
+            label={lang === 'en' ? 'Brand' : 'ยี่ห้อ'}
+            options={brandOptions}
+            selected={brandFilter}
+            onToggle={v => setBrandFilter(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])}
+            onClear={() => setBrandFilter([])}
+            lang={lang}
+          />
+          <FilterDropdown
+            label={lang === 'en' ? 'Color' : 'สีรถ'}
+            options={colorOptions}
+            selected={colorFilter}
+            onToggle={v => setColorFilter(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])}
+            onClear={() => setColorFilter([])}
+            lang={lang}
+          />
+          <div style={{ width: 1, height: 28, background: 'var(--border)', margin: '0 2px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--subtle)', whiteSpace: 'nowrap' }}>
+              {lang === 'en' ? 'From' : 'จาก'}
+            </span>
+            <input type="datetime-local" value={timeStart} onChange={e => setTimeStart(e.target.value)}
+              style={{
+                padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8,
+                fontSize: 12, fontFamily: 'JetBrains Mono, monospace', background: 'var(--surface)',
+                color: 'var(--text)', outline: 'none', transition: 'border 0.2s',
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--yellow)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            />
+            <span style={{ fontSize: 12, color: 'var(--subtle)' }}>—</span>
+            <input type="datetime-local" value={timeEnd} onChange={e => setTimeEnd(e.target.value)}
+              style={{
+                padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8,
+                fontSize: 12, fontFamily: 'JetBrains Mono, monospace', background: 'var(--surface)',
+                color: 'var(--text)', outline: 'none', transition: 'border 0.2s',
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--yellow)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            />
+          </div>
+          {(typeFilter.length > 0 || brandFilter.length > 0 || colorFilter.length > 0 || timeStart || timeEnd) && (
+            <button onClick={() => { setTypeFilter([]); setBrandFilter([]); setColorFilter([]); setTimeStart(''); setTimeEnd(''); }} style={{
+              padding: '7px 14px', borderRadius: 8, border: '1px solid var(--red)',
+              background: 'var(--red-bg)', color: '#dc2626', fontSize: 11.5, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'Sarabun,sans-serif', transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              ✕ {lang === 'en' ? 'Clear All' : 'ล้างทั้งหมด'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: 'var(--thead)' }}>
+              {[['timestamp', 'ts'], ['vehicle_type', 'type'], ['brand', 'brand'], ['car_color', 'color']].map(([k, lk]) => (
+                <th key={k} onClick={() => sort(k)} style={{
+                  padding: '14px 22px', textAlign: 'left', fontWeight: 700, fontSize: 12,
+                  color: 'var(--text)', letterSpacing: 0.3, cursor: 'pointer',
+                  userSelect: 'none', whiteSpace: 'nowrap',
+                  borderBottom: '2px solid var(--border)', transition: 'color 0.15s',
+                }}>
+                  {COL[lk]} <SI k={k} />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {pageRows.map((e, i) => (
+              <tr key={e.id} className={`trow${e.isNew ? ' new-row' : ''}`} style={{
+                background: i % 2 === 0 ? 'var(--surface)' : 'var(--row-alt)',
+                borderBottom: '1px solid var(--border)',
+              }}>
+                <td style={{ padding: '12px 22px', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--subtle)' }}>
+                  {e.timestamp}
+                </td>
+                <td style={{ padding: '12px 22px' }}><TypeBadge type={e.vehicle_type} lang={lang} /></td>
+                <td style={{ padding: '12px 22px', fontWeight: 600, color: 'var(--text)' }}>{e.brand}</td>
+                <td style={{ padding: '12px 22px' }}><ColorDot color={e.car_color} lang={lang} /></td>
+              </tr>
+            ))}
+            {pageRows.length === 0 && (
+              <tr><td colSpan={4} style={{
+                padding: 48, textAlign: 'center', color: 'var(--subtle)', fontSize: 14,
+              }}>
+                {lang === 'en' ? 'No results found' : 'ไม่พบข้อมูลที่ค้นหา'}
+              </td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {pages > 1 && (
+        <div style={{
+          padding: '14px 24px', display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center', borderTop: '1px solid var(--border)',
+          background: 'var(--row-alt)', flexWrap: 'wrap', gap: 10,
+        }}>
+          <span style={{ fontSize: 12, color: 'var(--subtle)' }}>
+            {lang === 'en' ? 'Showing' : 'แสดง'} {((page - 1) * PER_PAGE) + 1}–{Math.min(page * PER_PAGE, sorted.length)} {lang === 'en' ? 'of' : 'จาก'} {sorted.length}
+          </span>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {[
+              ['←', () => setPage(p => Math.max(1, p - 1)), page === 1],
+              ...Array.from({ length: Math.min(5, pages) }, (_, i) => {
+                const n = Math.max(1, Math.min(page - 2, pages - 4)) + i;
+                return n >= 1 && n <= pages ? [n, () => setPage(n), false, page === n] : null;
+              }).filter(Boolean),
+              ['→', () => setPage(p => Math.min(pages, p + 1)), page === pages],
+            ].map((item, i) => {
+              if (!item) return null;
+              const [label, onClick, disabled, active] = item;
+              return (
+                <button key={i} onClick={onClick} disabled={disabled} style={{
+                  padding: '5px 12px', borderRadius: 8,
+                  border: active ? 'none' : '1px solid var(--border)',
+                  background: active ? 'linear-gradient(135deg, #FFD300, #FFAA00)' : 'var(--surface)',
+                  color: active ? '#1a1d23' : 'var(--text)',
+                  fontWeight: active ? 700 : 400,
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                  fontSize: 12, opacity: disabled ? 0.35 : 1, transition: 'all 0.15s',
+                }}>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── App ────────────────────────────────────────────────────────────────── */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "dark": false,
+  "lang": "th",
+  "liveSpeed": "fast"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [entries, setEntries] = useState(initData);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState([]);
+  const [brandFilter, setBrandFilter] = useState([]);
+  const [colorFilter, setColorFilter] = useState([]);
+  const [timeStart, setTimeStart] = useState('');
+  const [timeEnd, setTimeEnd] = useState('');
+
+  useEffect(() => {
+    document.body.classList.toggle('dark', tweaks.dark);
+  }, [tweaks.dark]);
+
+  useEffect(() => {
+    const h = e => setEntries(prev => [...e.detail, ...prev]);
+    window.addEventListener('nt-csv', h);
+    return () => window.removeEventListener('nt-csv', h);
+  }, []);
+
+  useEffect(() => {
+    const ms = { slow: 14000, normal: 6000, fast: 2000 }[tweaks.liveSpeed] ?? 6000;
+    const t = setInterval(() => {
+      setEntries(prev => [mkEntry(0, true), ...prev.map(e => ({ ...e, isNew: false }))]);
+    }, ms);
+    return () => clearInterval(t);
+  }, [tweaks.liveSpeed]);
+
+  const filtered = useMemo(() => {
+    let result = entries;
+    const q = search.trim().toLowerCase();
+    if (q) {
+      result = result.filter(e =>
+        e.brand.toLowerCase().includes(q) ||
+        e.car_color.toLowerCase().includes(q) ||
+        (TH_CLR[e.car_color] || '').includes(q) ||
+        e.vehicle_type.toLowerCase().includes(q) ||
+        (TH_TYPE[e.vehicle_type] || '').includes(q) ||
+        e.timestamp.includes(q)
+      );
+    }
+    if (typeFilter.length > 0) result = result.filter(e => typeFilter.includes(e.vehicle_type));
+    if (brandFilter.length > 0) result = result.filter(e => brandFilter.includes(e.brand));
+    if (colorFilter.length > 0) result = result.filter(e => colorFilter.includes(e.car_color));
+    if (timeStart) result = result.filter(e => e.timestamp >= timeStart.replace('T', ' '));
+    if (timeEnd) result = result.filter(e => e.timestamp <= timeEnd.replace('T', ' ') + ':59');
+    return result;
+  }, [entries, search, typeFilter, brandFilter, colorFilter, timeStart, timeEnd]);
+
+  const typeOptions = useMemo(() => {
+    const types = [...new Set(entries.map(e => e.vehicle_type))].sort();
+    return types.map(t => ({ value: t, label: lang === 'en' ? (EN_TYPE[t] || t) : (TH_TYPE[t] || t) }));
+  }, [entries, lang]);
+  const brandOptions = useMemo(() => {
+    return [...new Set(entries.map(e => e.brand))].sort().map(b => ({ value: b, label: b }));
+  }, [entries]);
+  const colorOptions = useMemo(() => {
+    const colors = [...new Set(entries.map(e => e.car_color))];
+    return colors.map(c => ({ value: c, label: lang === 'en' ? (EN_CLR[c] || c) : (TH_CLR[c] || c) }));
+  }, [entries, lang]);
+
+  const lang = tweaks.lang;
+  const dark = tweaks.dark;
+
+  const typeCounts = useMemo(() => {
+    const c = {};
+    entries.forEach(e => { c[e.vehicle_type] = (c[e.vehicle_type] || 0) + 1; });
+    return c;
+  }, [entries]);
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <NavBar dark={dark} setDark={v => setTweak('dark', v)} lang={lang} setLang={v => setTweak('lang', v)} />
+
+      <main style={{ padding: '26px 32px', maxWidth: 1480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 22 }}>
+
+        {/* KPI Row */}
+        <div className="grid-4">
+          <StatCard
+            icon={Icons.car}
+            label={lang === 'en' ? 'Total Vehicles Today' : 'รถยนต์ภายในศูนย์สะสมวันนี้'}
+            sublabel={lang === 'en' ? 'All detected vehicles' : 'รวมยานพาหนะที่ตรวจจับ'}
+            value={entries.length}
+            trend={((entries.length - 1180) / 1180) * 100}
+            trendLabel={lang === 'en' ? 'vs yesterday' : 'จากเมื่อวาน'}
+            color="#FFD300"
+            bgColor="rgba(255,211,0,0.12)"
+            delay={0}
+          />
+          <StatCard
+            icon={TYPE_ICON.Car}
+            label={lang === 'en' ? 'Personal Cars' : 'รถยนต์ส่วนบุคคล'}
+            sublabel={((typeCounts.Car || 0) / (entries.length || 1) * 100).toFixed(1) + '% ' + (lang === 'en' ? 'of total' : 'ของทั้งหมด')}
+            value={typeCounts.Car || 0}
+            color="#3b82f6"
+            bgColor="var(--blue-bg)"
+            delay={60}
+          />
+          <StatCard
+            icon={TYPE_ICON.Truck}
+            label={lang === 'en' ? 'Trucks' : 'รถบรรทุก'}
+            sublabel={((typeCounts.Truck || 0) / (entries.length || 1) * 100).toFixed(1) + '% ' + (lang === 'en' ? 'of total' : 'ของทั้งหมด')}
+            value={typeCounts.Truck || 0}
+            color="#f59e0b"
+            bgColor="var(--red-bg)"
+            delay={120}
+          />
+          <StatCard
+            icon={TYPE_ICON.Motorcycle}
+            label={lang === 'en' ? 'Motorcycles' : 'รถมอไซต์'}
+            sublabel={((typeCounts.Motorcycle || 0) / (entries.length || 1) * 100).toFixed(1) + '% ' + (lang === 'en' ? 'of total' : 'ของทั้งหมด')}
+            value={typeCounts.Motorcycle || 0}
+            color="#8b5cf6"
+            bgColor="var(--purple-bg)"
+            delay={180}
+          />
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid-2">
+          <DonutChart entries={entries} dark={dark} lang={lang} />
+          <TrendChart entries={entries} dark={dark} lang={lang} />
+        </div>
+
+        {/* Brands + Types Row */}
+        <div className="grid-2">
+          <TopBrandsCard entries={entries} lang={lang} />
+          <TypeDistribution entries={entries} lang={lang} />
+        </div>
+
+        {/* Data Table */}
+        <DataTable rows={filtered} allRows={entries} search={search} setSearch={setSearch} lang={lang}
+          typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+          brandFilter={brandFilter} setBrandFilter={setBrandFilter}
+          colorFilter={colorFilter} setColorFilter={setColorFilter}
+          timeStart={timeStart} setTimeStart={setTimeStart}
+          timeEnd={timeEnd} setTimeEnd={setTimeEnd}
+          typeOptions={typeOptions} brandOptions={brandOptions} colorOptions={colorOptions}
+        />
+      </main>
+
+      <TweaksPanel>
+        <TweakSection label="Display">
+          <TweakToggle label="Dark Mode"
+            value={tweaks.dark}
+            onChange={v => setTweak('dark', v)} />
+          <TweakRadio label="Language"
+            value={tweaks.lang}
+            options={['th', 'en']}
+            onChange={v => setTweak('lang', v)} />
+        </TweakSection>
+        <TweakSection label="Live Feed">
+          <TweakRadio label="Update Speed"
+            value={tweaks.liveSpeed}
+            options={['slow', 'normal', 'fast']}
+            onChange={v => setTweak('liveSpeed', v)} />
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

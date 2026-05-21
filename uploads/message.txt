@@ -1,0 +1,77 @@
+# System Prompt / UI Blueprint: NT Chaengwattana Vehicle Detection Dashboard
+
+## 1. General App Identity & Design System (Vibe)
+* **App Name:** NT Vehicle Detection Analytics (Chaengwattana Center)
+* **Design Vibe:** Professional, clean, modern corporate, trustworthy, and high-tech.
+* **Color Palette (NT Corporate Style):**
+  * **Primary Color:** NT Yellow (#FFCC00 / #FFD300) - Used for primary accents, key buttons, and highlighted metric cards.
+  * **Secondary Color:** Clean White (#FFFFFF) - Used as the main background for content cards and sections.
+  * **Background Color:** Light Gray/Off-white (#F8F9FA) - To create depth behind white cards.
+  * **Text/Typography Color:** Dark Charcoal (#212529) for readability, with Medium Gray (#6C757D) for subtitles.
+* **Layout Structure:** Single-page dashboard. Clean top navigation bar with NT Logo placeholder on the left and "NT Chaengwattana Center - Security Control" title on the right.
+
+---
+
+## 2. Data Source Definition (CSV Schema Reference)
+The UI components must be designed to dynamically map and ingest data from a standard CSV log with the following columns:
+* `timestamp` (e.g., 2026-05-20 10:45:12)
+* `car_color` (e.g., White, Black, Bronze, Red)
+* `brand` (e.g., Toyota, Honda, Isuzu)
+* `vehicle_type` (e.g., Car, Truck, Motorcycle)
+
+---
+
+## 3. UI Component Layout (2 Main Sections)
+
+### SECTION 1: Real-time Summary Metrics & Visual Analytics
+*Layout: 3-Column Grid Layout at the top of the dashboard.*
+
+#### Card 1.1: Total Vehicle Counter (KPI Card)
+* **Type:** Large Metric Display
+* **Background:** NT Yellow with white text or Dark Charcoal with NT Yellow text for high emphasis.
+* **Content:**
+  * Subtitle: "รถยนต์ภายในศูนย์สะสมวันนี้" (Total Vehicles Inside Today)
+  * Main Value: Large bold numbers (e.g., **1,245**) with an animated "Live" green dot indicator.
+  * Footer: Trend indicator (+5% from yesterday).
+
+#### Card 1.2: Top 3 Vehicle Brands (Class Distribution)
+* **Type:** Horizontal Bar List or Rank List
+* **Background:** Clean White Card with light border.
+* **Content:**
+  * Section Header: "ยี่ห้อรถยนต์ยอดนิยม (Top 3 Classes)"
+  * Progress Bars / Ranking items:
+    1. **Toyota:** Show progress bar filled with NT Yellow (e.g., 45%)
+    2. **Honda:** Show progress bar filled with Medium Gray (e.g., 30%)
+    3. **Isuzu:** Show progress bar filled with Light Gray (e.g., 15%)
+
+#### Card 1.3: Vehicle Color Proportion (Analytics Chart)
+* **Type:** Pie Chart or Donut Chart
+* **Background:** Clean White Card.
+* **Content:**
+  * Section Header: "สัดส่วนสีของรถที่เข้า-ออก (Vehicle Color Distribution)"
+  * Chart Component: A Pie Chart rendering data from `car_color`. 
+  * Chart Color Palette: Match actual car colors mapped to clean UI shades (e.g., White slice, Black slice, Bronze slice, Red slice) with clear labels and tooltips displaying percentages.
+
+---
+
+### SECTION 2: Live Detection Log Table (Data Grid)
+*Layout: Full-width container placed below Section 1.*
+
+#### Component 2.1: Modern Data Table
+* **Type:** Interactive Table Grid
+* **Background:** White container with an NT Yellow top border accent.
+* **Header Style:** Soft light-yellow background with dark bold text for column headers.
+* **Columns Required:**
+  1. **เวลา (Timestamp):** Left-aligned, monospace font for clean alignment.
+  2. **ประเภทรถ (Vehicle Type):** Render as a visual badge (e.g., Light Gray badge for "รถบรรทุก", Soft Yellow badge for "รถมอไซต์", White-bordered badge for "รถยนต์ส่วนบุคคล").
+  3. **ยี่ห้อ (Brand):** Text column.
+  4. **สีรถ (Color):** Display a small colored circle dot next to the color name text (e.g., ⚫ ดำ, ⚪ ขาว).
+* **Table Features for Stitch Interactive Prototyping:**
+  * Alternating row colors (White and very light gray) for high readability.
+  * Top-right utilities: A search bar ("ค้นหา...") and a simulated "Export CSV" button.
+
+---
+
+## 4. Interaction & Micro-interactions
+* **Hover States:** Elements like table rows and chart slices should gently scale or dim on hover. Buttons should change shade from NT Yellow to a slightly darker warm amber (#E6B800).
+* **Responsiveness:** Ensure the grid collapses beautifully from a 3-column desktop layout to a single-column mobile view.
