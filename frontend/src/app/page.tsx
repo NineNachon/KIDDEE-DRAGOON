@@ -11,6 +11,7 @@ import { TypeDistribution } from "@/components/TypeDistribution";
 import { DataTable } from "@/components/DataTable";
 import { AccidentAlert } from "@/components/AccidentAlert";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio } from "@/components/TweaksPanel";
+import { OverviewInsights } from "@/components/OverviewInsights";
 import { ChatBot } from "@/components/ChatBot";
 import { Icons, TYPE_ICON } from "@/components/icons";
 import { detectionKey, eventDetectionKey, eventTypeLabel } from "@/lib/advancedEvents";
@@ -160,32 +161,12 @@ export default function DashboardPage() {
       <AccidentAlert events={advancedEvents} lang={lang} />
 
       <main className="dashboard-main flex flex-col gap-8">
-        {/* ── Section: Overview KPIs ─────────────────────────── */}
+        {/* ── Section: Overview ─────────────────────────── */}
         <section>
           <div className="section-title fade-up">
             {lang === "en" ? "Overview" : "ภาพรวม"}
           </div>
-          <div className="dashboard-grid">
-            <StatCard
-              icon={<span className="text-[#FFD300]">{Icons.car}</span>}
-              label={lang === "en" ? "Total Vehicles" : "รวมทั้งหมด"}
-              sublabel={lang === "en" ? "All detected vehicles" : "รวมยานพาหนะที่ตรวจจับ"}
-              value={entries.length}
-              color="#FFD300" bgColor="rgba(255,211,0,0.12)"
-            />
-            {typeKeys.map((type, i) => (
-              <StatCard
-                key={type}
-                icon={<span style={{ color: TYPE_COLORS[type] }}>{TYPE_ICON[type] || Icons.car}</span>}
-                label={type}
-                sublabel={`${((typeCounts[type] || 0) / (entries.length || 1) * 100).toFixed(1)}%`}
-                value={typeCounts[type] || 0}
-                color={TYPE_COLORS[type]}
-                bgColor={TYPE_BG[type]}
-                delay={50 * (i + 1)}
-              />
-            ))}
-          </div>
+          <OverviewInsights entries={entries} advancedEvents={advancedEvents} lang={lang} />
         </section>
 
         {/* ── Section: Analytics ─────────────────────────────── */}

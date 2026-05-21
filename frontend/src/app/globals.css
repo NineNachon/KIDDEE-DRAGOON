@@ -207,6 +207,36 @@ body::before {
   gap: 18px;
 }
 
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px;
+}
+
+.overview-hero {
+  background: linear-gradient(135deg, rgba(255,211,0,0.06), rgba(59,130,246,0.04));
+}
+.dark .overview-hero {
+  background: linear-gradient(135deg, rgba(255,211,0,0.04), rgba(59,130,246,0.03));
+}
+.hero-icon-wrap {
+  background: rgba(255,211,0,0.12);
+  box-shadow: 0 6px 20px rgba(255,211,0,0.15);
+}
+.dark .hero-icon-wrap {
+  background: rgba(255,211,0,0.1);
+  box-shadow: 0 6px 20px rgba(255,211,0,0.08);
+}
+.hero-number {
+  font-size: clamp(36px, 4vw, 52px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #FFD300, #FFAA00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 @media (max-width: 1180px) {
   .analytics-grid {
     grid-template-columns: 1fr;

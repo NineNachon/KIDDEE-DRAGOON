@@ -171,9 +171,7 @@ export function ChatBot({ lang }: Props) {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3" style={{ scrollbarWidth: "thin" }}>
         {messages.length === 0 && (
           <div className="mt-4 text-center">
-            <div className="text-[13px] font-medium text-[var(--subtle)]">
-              {lang === "en" ? "Hi! Try asking:" : "ลองถามจากชุด Mock นี้"}
-            </div>
+           
             <div className="mt-3 flex flex-wrap justify-center gap-2">
               {suggestions.map(s => (
                 <button key={s} onClick={() => send(s)}
