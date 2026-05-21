@@ -6,6 +6,7 @@ export interface VehicleDetection {
   colorHex: string;
   vehicleModel?: string;
   licensePlate?: string;
+  eventFlag?: string;
   plateConfidence?: number;
   cameraId?: string;
   laneId?: string;

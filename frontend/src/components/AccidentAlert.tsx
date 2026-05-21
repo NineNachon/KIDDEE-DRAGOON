@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { eventTypeLabel } from "@/lib/advancedEvents";
 import { formatTimestamp } from "@/lib/constants";
 import type { AdvancedEvent, Lang } from "@/types";
@@ -12,12 +12,18 @@ interface Props {
 
 export function AccidentAlert({ events, lang }: Props) {
   const [dismissedId, setDismissedId] = useState<string | null>(null);
+  const [canShow, setCanShow] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setCanShow(true), 10000);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const accident = useMemo(() => (
     events.find(e => e.type === "accident_suspected" && e.id !== dismissedId)
   ), [events, dismissedId]);
 
-  if (!accident) return null;
+  if (!canShow || !accident) return null;
 
   const plate = accident.detection?.licensePlate;
   const camera = accident.detection?.cameraId;

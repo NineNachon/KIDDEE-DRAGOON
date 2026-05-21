@@ -77,6 +77,19 @@ def analyze_advanced_events(rows: list[VehicleDetection]) -> list[AdvancedEvent]
                 detection=row,
             ))
 
+        if row.eventFlag and row.eventFlag.strip().lower() in {"yes", "true", "1", "y"}:
+            events.append(AdvancedEvent(
+                id=_event_id("accident_suspected", row, "source-log"),
+                type="accident_suspected",
+                timestamp=row.timestamp,
+                severity="critical",
+                title="Source log flagged event",
+                description="The source CSV marks this detection as an event.",
+                confidence=0.8,
+                evidence={"eventFlag": row.eventFlag},
+                detection=row,
+            ))
+
         if row.directionDeg is not None and row.expectedDirectionDeg is not None:
             delta = _direction_delta(row.directionDeg, row.expectedDirectionDeg)
             if delta >= WRONG_WAY_TOLERANCE_DEG:

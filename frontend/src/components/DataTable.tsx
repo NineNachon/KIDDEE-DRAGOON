@@ -4,10 +4,16 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { Icons } from "./icons";
 import { FilterDropdown } from "./FilterDropdown";
 import { eventTypeLabel, severityColor } from "@/lib/advancedEvents";
-import { BADGE_STYLES, formatTimestamp } from "@/lib/constants";
+import { BADGE_STYLES, TYPE_BG, TYPE_COLORS, formatTimestamp } from "@/lib/constants";
 import type { AdvancedEvent, VehicleDetection, Lang, FilterOption } from "@/types";
 
 const PER_PAGE = 15;
+
+function plateProvince(plate?: string): string | null {
+  if (!plate) return null;
+  const parts = plate.trim().split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1] : null;
+}
 
 interface Props {
   rows: VehicleDetection[];
@@ -98,6 +104,8 @@ export function DataTable({
   const hasFilters = typeFilter.length > 0 || brandFilter.length > 0 || colorFilter.length > 0 ||
     modelFilter.length > 0 || plateFilter.length > 0 || eventFilter.length > 0 || timeStart || timeEnd;
 
+  const plateFilterLabel = lang === "en" ? "Plate province" : "จังหวัดป้าย";
+
   const emptyMetaText = lang === "en" ? "Waiting for real metadata" : "รอ metadata จริง";
 
   return (
@@ -143,7 +151,7 @@ export function DataTable({
         <FilterDropdown label={lang === "en" ? "Model" : "รุ่นรถ"} options={modelOptions}
           selected={modelFilter} onToggle={v => setModelFilter(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])}
           onClear={() => setModelFilter([])} lang={lang} emptyText={emptyMetaText} />
-        <FilterDropdown label={lang === "en" ? "Plate" : "ป้ายทะเบียน"} options={plateOptions}
+        <FilterDropdown label={plateFilterLabel} options={plateOptions}
           selected={plateFilter} onToggle={v => setPlateFilter(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])}
           onClear={() => setPlateFilter([])} lang={lang} emptyText={emptyMetaText} />
         <FilterDropdown label={lang === "en" ? "Event" : "เหตุการณ์"} options={eventOptions}
@@ -188,18 +196,35 @@ export function DataTable({
           </thead>
           <tbody>
             {pageRows.map((e, i) => {
-              const badge = BADGE_STYLES[e.vehicleType] || BADGE_STYLES["เธฃเธ–เธขเธเธ•เนเธเธฑเนเธเธเธธเธเธเธฅ"];
+              const badge = BADGE_STYLES[e.vehicleType] || BADGE_STYLES["รถยนต์นั่งบุคคล"];
               const events = eventByDetectionKey.get(getDetectionKey(e)) || [];
+              const typeColor = TYPE_COLORS[e.vehicleType] || "#64748b";
+              const typeBg = TYPE_BG[e.vehicleType] || "rgba(100,116,139,0.08)";
+              const province = plateProvince(e.licensePlate);
               return (
-                <tr key={e.timestamp + i} className="trow border-b border-[var(--border)] transition-colors hover:bg-[var(--yellow-light)]"
-                  style={{ background: i % 2 === 0 ? "var(--surface)" : "var(--row-alt)" }}>
-                  <td className="px-5 py-3 font-mono text-xs text-[var(--subtle)]">{formatTimestamp(e.timestamp, lang)}</td>
+                <tr key={e.timestamp + i} className="trow border-b border-[var(--border)] transition-all hover:brightness-[0.985]"
+                  style={{
+                    background: events.length > 0
+                      ? "linear-gradient(90deg, rgba(239,68,68,0.16), rgba(255,247,237,0.82) 44%, var(--surface) 100%)"
+                      : `linear-gradient(90deg, ${typeBg}, var(--surface) 58%)`,
+                    borderLeft: `4px solid ${events.length > 0 ? "#ef4444" : typeColor}`,
+                  }}>
+                  <td className="px-5 py-3 font-mono text-xs font-semibold" style={{ color: events.length > 0 ? "#b91c1c" : "var(--subtle)" }}>{formatTimestamp(e.timestamp, lang)}</td>
                   <td className="px-5 py-3">
                     <span className="whitespace-nowrap rounded-full px-3 py-1 text-[11.5px] font-semibold" style={badge}>{e.vehicleType}</span>
                   </td>
                   <td className="px-5 py-3 font-semibold text-[var(--text)]">{e.brand}</td>
                   <td className="px-5 py-3 font-medium text-[var(--text)]">{e.vehicleModel || "-"}</td>
-                  <td className="px-5 py-3 font-mono text-xs font-semibold text-[var(--text)]">{e.licensePlate || "-"}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-[var(--text)]">{e.licensePlate || "-"}</span>
+                      {province && (
+                        <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-2 py-0.5 text-[10.5px] font-bold text-[var(--subtle)]">
+                          {province}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-5 py-3">
                     <span className="inline-flex items-center gap-2">
                       <span className="h-[13px] w-[13px] shrink-0 rounded-full shadow-sm" style={{ background: e.colorHex }} />
