@@ -26,6 +26,16 @@ function plateProvince(plate?: string): string | null {
   return parts.length > 1 ? parts[parts.length - 1] : null;
 }
 
+function sameOriginApiUrl() {
+  return typeof window === "undefined" ? "" : window.location.origin;
+}
+
+function sameOriginWsUrl() {
+  if (typeof window === "undefined") return "";
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}/ws/stream`;
+}
+
 export default function DashboardPage() {
   const [dark, setDark] = useState(false);
   const [lang, setLang] = useState<Lang>("th");
@@ -42,8 +52,8 @@ export default function DashboardPage() {
   const [timeStart, setTimeStart] = useState("");
   const [timeEnd, setTimeEnd] = useState("");
 
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws/stream";
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || sameOriginWsUrl();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || sameOriginApiUrl();
   const { isConnected, lastMessage, send } = useWebSocket(wsUrl);
 
   useEffect(() => {

@@ -13,6 +13,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from analytics import analyze_advanced_events
 from rag import VehicleRAG
@@ -20,6 +22,7 @@ from vision_schema import parse_detection_row
 
 # ── Config ──────────────────────────────────────────────────────
 CSV_PATH = Path(os.environ.get("CSV_PATH", Path(__file__).resolve().parent.parent / "log.csv"))
+FRONTEND_DIST = Path(os.environ.get("FRONTEND_DIST", Path(__file__).resolve().parent / "public"))
 DEFAULT_DELAY_MS = 40  # ~25 FPS
 
 
@@ -174,3 +177,27 @@ async def health():
 async def chat(req: ChatRequest):
     answer = rag.query(req.message)
     return ChatResponse(answer=answer)
+
+
+if (FRONTEND_DIST / "_next").exists():
+    app.mount("/_next", StaticFiles(directory=FRONTEND_DIST / "_next"), name="next-static")
+
+
+@app.get("/", include_in_schema=False)
+async def serve_frontend_index():
+    index_path = FRONTEND_DIST / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return {"status": "frontend_not_built", "api": "ok"}
+
+
+@app.get("/{path:path}", include_in_schema=False)
+async def serve_frontend_asset(path: str):
+    file_path = FRONTEND_DIST / path
+    if file_path.is_file():
+        return FileResponse(file_path)
+
+    index_path = FRONTEND_DIST / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return {"status": "frontend_not_built", "api": "ok"}
