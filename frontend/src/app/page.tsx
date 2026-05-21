@@ -16,6 +16,7 @@ import { ChatBot } from "@/components/ChatBot";
 import { Icons, TYPE_ICON } from "@/components/icons";
 import { detectionKey, eventDetectionKey, eventTypeLabel } from "@/lib/advancedEvents";
 import { TYPE_COLORS, TYPE_BG, LIVE_SPEED_MS } from "@/lib/constants";
+import { loadStaticLog, staticAdvancedEvents } from "@/lib/staticLog";
 import type { AdvancedEvent, VehicleDetection, Lang, LiveSpeed, FilterOption } from "@/types";
 
 const MAX_ENTRIES = 5000;
@@ -24,16 +25,6 @@ function plateProvince(plate?: string): string | null {
   if (!plate) return null;
   const parts = plate.trim().split(/\s+/);
   return parts.length > 1 ? parts[parts.length - 1] : null;
-}
-
-function sameOriginApiUrl() {
-  return typeof window === "undefined" ? "" : window.location.origin;
-}
-
-function sameOriginWsUrl() {
-  if (typeof window === "undefined") return "";
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.host}/ws/stream`;
 }
 
 export default function DashboardPage() {
@@ -52,9 +43,32 @@ export default function DashboardPage() {
   const [timeStart, setTimeStart] = useState("");
   const [timeEnd, setTimeEnd] = useState("");
 
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || sameOriginWsUrl();
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || sameOriginApiUrl();
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+  const staticMode = !wsUrl && !apiUrl;
   const { isConnected, lastMessage, send } = useWebSocket(wsUrl);
+
+  useEffect(() => {
+    if (!staticMode) return;
+
+    let cancelled = false;
+    loadStaticLog()
+      .then(rows => {
+        if (cancelled) return;
+        setEntries(rows);
+        setAdvancedEvents(staticAdvancedEvents(rows));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEntries([]);
+          setAdvancedEvents([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [staticMode]);
 
   useEffect(() => {
     if (!lastMessage) return;
@@ -66,14 +80,17 @@ export default function DashboardPage() {
   }, [lastMessage]);
 
   useEffect(() => {
+    if (!wsUrl) return;
     send({ action: "set_delay", delay_ms: LIVE_SPEED_MS[liveSpeed] });
-  }, [liveSpeed, send]);
+  }, [liveSpeed, send, wsUrl]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
   useEffect(() => {
+    if (!apiUrl) return;
+
     let cancelled = false;
     const loadEvents = async () => {
       try {
@@ -176,7 +193,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen transition-colors duration-300" style={{ background: "var(--bg)" }}>
-      <NavBar dark={dark} setDark={setDark} lang={lang} isConnected={isConnected} />
+      <NavBar dark={dark} setDark={setDark} lang={lang} isConnected={staticMode || isConnected} />
       <AccidentAlert events={advancedEvents} lang={lang} />
 
       <main className="dashboard-main flex flex-col gap-8">

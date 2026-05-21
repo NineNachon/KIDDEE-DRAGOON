@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
-export function useWebSocket(url: string) {
+export function useWebSocket(url?: string) {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -11,6 +11,7 @@ export function useWebSocket(url: string) {
   urlRef.current = url;
 
   const connect = useCallback(() => {
+    if (!urlRef.current) return;
     try {
       const ws = new WebSocket(urlRef.current);
 
@@ -35,12 +36,13 @@ export function useWebSocket(url: string) {
   }, []);
 
   useEffect(() => {
+    if (!url) return;
     connect();
     return () => {
       wsRef.current?.close();
       if (reconnectRef.current) clearTimeout(reconnectRef.current);
     };
-  }, [connect]);
+  }, [connect, url]);
 
   const send = useCallback((data: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
