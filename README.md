@@ -29,7 +29,7 @@
 - ตารางข้อมูลแบบ Filter, Sort, Search, Export CSV
 - ระบบแจ้งเตือนอุบัติเหตุ (Accident Alert)
 - ระบบแชทบอทสอบถามข้อมูล (Chatbot)
-- รองรับ Dark Mode / ภาษาไทย-อังกฤษ
+- รองรับ Dark Mode
 - Docker Compose สำหรับ deploy ง่าย
 
 ---
