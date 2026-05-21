@@ -1,6 +1,6 @@
 # NT CCTV AI Camera — Vehicle Detection Analytics Dashboard
 
-ระบบตรวจจับยานพาหนะแบบ Real-time สำหรับศูนย์การค้าแจ้งวัฒนะ พัฒนาด้วย Next.js 15 + FastAPI + WebSocket รองรับภาษาไทย/อังกฤษ
+ระบบตรวจจับยานพาหนะแบบ Real-time สำหรับศูนย์การค้าแจ้งวัฒนะ พัฒนาด้วย Next.js 15 + FastAPI + WebSocket 
 
 ---
 
