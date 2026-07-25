@@ -35,3 +35,13 @@ venv/
 
 # Docker volumes
 data/
+
+# Course materials / downloaded artifacts (keep out of repo)
+*.pdf
+*.zip
+*.jpg
+*.jpeg
+*.png
+!frontend/public/**
+SAIE2026-main/
+archive/
