@@ -2,6 +2,8 @@
 
 Vehicle Detection Analytics Dashboard สำหรับแสดงผลข้อมูลการตรวจจับยานพาหนะจากไฟล์ `log.csv` พร้อมกราฟสรุป, ตาราง log, filter, alert เหตุการณ์ และหน้าตา dashboard สำหรับเดโมระบบ CCTV/AI Camera
 
+**ผู้พัฒนา:** Nachon Boriboonthana (Nine) — [Portfolio](https://github.com/NineNachon/Portfolio-final) · [GitHub](https://github.com/NineNachon)
+
 โปรเจกต์นี้รองรับ 2 วิธีใช้งาน:
 
 - **Vercel ที่เดียวจบ**: deploy เฉพาะ `frontend` ได้ทันที โดย frontend โหลดข้อมูลจาก `frontend/public/log.csv`
